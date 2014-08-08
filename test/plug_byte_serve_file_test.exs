@@ -56,6 +56,18 @@ defmodule PlugByteServePathFileTest do
     assert byte_size(conn.resp_body) == 1000
   end
 
+  test "get larger range without end responds with rest of data" do
+    conn = conn(:get, "/")
+            |> put_req_header("range", "bytes=0-")
+            |> call
+    assert conn.status == 206
+    assert get_resp_header(conn, "content-type") == ["video/mp4"]
+    assert get_resp_header(conn, "accept-ranges") == ["bytes"]
+    assert get_resp_header(conn, "content-range") == ["bytes 0-999/257546"]
+    assert get_resp_header(conn, "content-length") == ["1000"]
+    assert byte_size(conn.resp_body) == 1000
+  end
+
   test "get without range start responds with some data" do
     conn = conn(:get, "/")
             |> put_req_header("range", "bytes=-0")

@@ -103,7 +103,8 @@ defmodule PlugByteServe do
     [_range_type, range_start, range_end] =
       case hdr_range do
         ["bytes", "",          ""]        -> ["bytes", "0",         "999"]
-        ["bytes", range_start, ""]        -> ["bytes", range_start, "999"]
+        ["bytes", "0",         ""]        -> ["bytes", "0",         "999"]
+        ["bytes", range_start, ""]        -> ["bytes", range_start, "#{file_info.size - 1}"]
         ["bytes", "",          range_end] -> ["bytes", "0",         range_end]
         ["bytes", range_start, range_end] -> ["bytes", range_start, range_end]
         _                                 -> ["bytes", "0",         "999"]
