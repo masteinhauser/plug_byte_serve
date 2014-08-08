@@ -37,9 +37,9 @@ end
 
 ## Todo
 
-[] Plug-ify byte serving code
-[] Proper handling of invalid range requests
-[] Support multipart range requests
+- [ ] Plug-ify byte serving code
+- [ ] Proper handling of invalid range requests
+- [ ] Support multipart range requests
 
 ## Contributing
 
