@@ -1,15 +1,15 @@
-# Plug.ByteServe
+# PlugByteServe
 
 This is a Plug module for adding [HTTP Content-Range][rfc-content-range] to a set of routes. Only single byte ranges are currently supported.
 Wikipedia entry on [HTTP Byte Serving][wiki-byte-serving] for more information.
 
 ## Installation
 
-Add `plug-byte-serve` to the `deps` function in your project's `mix.exs` file:
+Add `plug_byte_serve` to the `deps` function in your project's `mix.exs` file:
 
 ```elixir
 defp deps do
-  [{:plug-byte-serve, "~> 0.1.0"}]
+  [{:plug_byte_serve, "~> 0.1.0"}]
 end
 ```
 
@@ -17,18 +17,18 @@ Then run `mix do deps.get, deps.compile` inside your project's directory.
 
 ## Usage
 
-Plug.ByteServe can be used just as any other Plug. Add Plug.ByteServe after all of the other plugs you want to happen using the `plug` function.
+PlugByteServe can be used just as any other Plug. Add Plug.ByteServe after all of the other plugs you want to happen using the `plug` function.
 
 ```elixir
 defmodule GetServed do
   import Plug.Conn
   use Plug.Router
 
-  plug Plug.ByteServe,
+  plug PlugByteServe, path: "/tmp", file: "/tmp/file"
   plug :match
   plug :dispatch
 
-  get "/bytes" %{"file" => file} do
+  get "/bytes" do
     conn
     |> send_resp()
   end
@@ -51,7 +51,7 @@ end
 
 ## License
 
-Plug.BasicAuth uses the same license as Plug and the Elixir programming language. See the [license file](https://raw.githubusercontent.com/masteinhauser/plug-byte-serve/master/LICENSE) for more information.
+Plug.BasicAuth uses the same license as Plug and the Elixir programming language. See the [license file](https://raw.githubusercontent.com/masteinhauser/plug_byte_serve/master/LICENSE) for more information.
 
 [wiki-byte-serving]: http://en.wikipedia.org/wiki/Byte_serving "Wikipedia - HTTP Byte Serving"
 [rfc-content-range]: http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.16 "RFC2616 - Content-Range"
