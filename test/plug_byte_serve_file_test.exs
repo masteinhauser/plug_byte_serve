@@ -1,8 +1,8 @@
-defmodule PlugByteServeTest do
+defmodule PlugByteServePathFileTest do
   use ExUnit.Case
   use Plug.Test
 
-  defmodule PrivatePlug do
+  defmodule PrivateFilePlug do
     import Plug.Conn
     use Plug.Router
 
@@ -23,7 +23,7 @@ defmodule PlugByteServeTest do
   end
 
   defp call(conn) do
-    PrivatePlug.call(conn, [])
+    PrivateFilePlug.call(conn, [])
   end
 
   test "head response with only headers" do

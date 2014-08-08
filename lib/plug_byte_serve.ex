@@ -88,7 +88,7 @@ defmodule PlugByteServe do
   defp get_file(opts) do
     path = Keyword.get(opts, :path, System.cwd)
     file = Keyword.fetch!(opts, :file)
-    path <> file
+    path <> "/" <> file
   end
 
   defp find_range(conn, file) do
