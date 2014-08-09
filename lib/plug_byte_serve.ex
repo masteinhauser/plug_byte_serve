@@ -92,6 +92,7 @@ defmodule PlugByteServe do
   end
 
   defp find_range(conn, file) do
+    byte_limit = 1_000_000
     {:ok, file_info} = File.stat(file)
 
     hdr_range =
@@ -123,13 +124,19 @@ defmodule PlugByteServe do
         range_start <  0 and range_end <  file_info.size -> {206, 0, range_end}
       end
 
-    r_limit = r_end - r_start + 1 # We are counting from 0, not 1
-
-    r_limit =
-      case r_limit do
-        0 -> 1
-        _ -> r_limit
-      end
+    # Limit the number of bytes read at once
+    [r_start, r_end, r_limit] =
+    cond do
+      r_end - r_start + 1 > byte_limit ->
+        # Make sure they are not too greedy
+        [r_start, r_start + byte_limit, (r_start + byte_limit) - r_start + 1]
+      r_end - r_start + 1 == 0 ->
+        # Handle when they are asking for just 1 byte
+        [r_start, r_end, 1]
+      true ->
+        # Normal request
+        [r_start, r_end, r_end - r_start + 1]
+    end
 
     {status, r_start, r_end, r_limit}
   end
