@@ -58,6 +58,7 @@ end
 
 - [x] Plug-ify byte serving code
 - [x] Proper handling of invalid range requests
+- [ ] Better handle large file read + streaming
 - [ ] Support multipart range requests
 
 ## Contributing

@@ -92,7 +92,6 @@ defmodule PlugByteServe do
   end
 
   defp find_range(conn, file) do
-    byte_limit = 1_000_000
     {:ok, file_info} = File.stat(file)
 
     hdr_range =
@@ -127,9 +126,6 @@ defmodule PlugByteServe do
     # Limit the number of bytes read at once
     [r_start, r_end, r_limit] =
     cond do
-      r_end - r_start + 1 > byte_limit ->
-        # Make sure they are not too greedy
-        [r_start, r_start + byte_limit, (r_start + byte_limit) - r_start + 1]
       r_end - r_start + 1 == 0 ->
         # Handle when they are asking for just 1 byte
         [r_start, r_end, 1]
@@ -141,10 +137,25 @@ defmodule PlugByteServe do
     {status, r_start, r_end, r_limit}
   end
 
-  defp read_file(file, range_start, _range_end, range_limit) do
-    {:ok, device} = :file.open(file, [:read, :binary])
-    {:ok, _position} = :file.position(device, range_start)
-    {:ok, data} = :file.read(device, range_limit)
+  defp read_file(file, range_start, range_end, range_limit) do
+    byte_limit = 1_000_000
+
+    # Limit the number of bytes read at once
+    [r_start, r_end, r_limit] =
+    cond do
+      range_end - range_start + 1 > byte_limit ->
+        # Make sure they are not too greedy
+        [range_start, range_start + byte_limit, (range_start + byte_limit) - range_start + 1]
+      range_end - range_start + 1 == 0 ->
+        # Handle when they are asking for just 1 byte
+        [range_start, range_end, 1]
+      true ->
+        # Normal request
+        [range_start, range_end, range_end - range_start + 1]
+    end
+
+    {:ok, device} = :file.open(file, [:read, :binary, {:read_ahead, byte_limit}])
+    {:ok, data} = :file.pread(device, r_start, r_limit)
     {:ok, data}
   end
 end
