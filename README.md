@@ -19,6 +19,7 @@ Then run `mix do deps.get, deps.compile` inside your project's directory.
 
 PlugByteServe can be used just as any other Plug. Add Plug.ByteServe after all of the other plugs you want to happen using the `plug` function.
 
+### When you know which file you want to serve
 ```elixir
 defmodule GetServed do
   import Plug.Conn
@@ -28,8 +29,26 @@ defmodule GetServed do
   plug :match
   plug :dispatch
 
-  get "/bytes" do
+  get "/" do
     conn
+    |> send_resp()
+  end
+end
+```
+
+### When the file is dynamically found
+``` elixir
+defmodule GetServed do
+  import Plug.Conn
+  use Plug.Router
+
+  plug :match
+  plug :dispatch
+
+  get "/:file" do
+    path = "/path/to/files/"
+    conn
+    |> PlugByteServe.call([path: path, file: file])
     |> send_resp()
   end
 end
