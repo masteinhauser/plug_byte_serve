@@ -35,7 +35,8 @@ defmodule PlugByteServe do
       #        end
       #      end
   """
-  #  @behaviour Plug.Module
+
+  @byte_limit 100_000_000 # 100 MB
 
   alias Plug.Conn
   import Plug.Conn, only: [get_req_header:  2,
@@ -92,7 +93,6 @@ defmodule PlugByteServe do
   end
 
   defp find_range(conn, file) do
-    byte_limit = 1_000_000
     {:ok, file_info} = File.stat(file)
 
     hdr_range =
@@ -127,9 +127,6 @@ defmodule PlugByteServe do
     # Limit the number of bytes read at once
     [r_start, r_end, r_limit] =
     cond do
-      r_end - r_start + 1 > byte_limit ->
-        # Make sure they are not too greedy
-        [r_start, r_start + byte_limit, (r_start + byte_limit) - r_start + 1]
       r_end - r_start + 1 == 0 ->
         # Handle when they are asking for just 1 byte
         [r_start, r_end, 1]
@@ -141,10 +138,39 @@ defmodule PlugByteServe do
     {status, r_start, r_end, r_limit}
   end
 
-  defp read_file(file, range_start, _range_end, range_limit) do
-    {:ok, device} = :file.open(file, [:read, :binary])
-    {:ok, _position} = :file.position(device, range_start)
-    {:ok, data} = :file.read(device, range_limit)
-    {:ok, data}
+  defp read_file(file, range_start, range_end, range_limit) do
+    # Limit the number of bytes read at once
+    [rstart, rend, rlimit] =
+    cond do
+      range_end - range_start + 1 > @byte_limit ->
+        # Make sure they are not too greedy
+        [range_start, range_start + @byte_limit, (range_start + @byte_limit) - range_start + 1]
+      range_end - range_start + 1 == 0 ->
+        # Handle when they are asking for just 1 byte
+        [range_start, range_end, 1]
+      true ->
+        # Normal request
+        [range_start, range_end, range_end - range_start + 1]
+    end
+
+    served = 0
+    read_ahead_limit = div(@byte_limit, 2)
+    {:ok, device} = :file.open(file, [:read, :binary, {:read_ahead, read_ahead_limit}])
+    do_read(rstart, rend, device, 0)
   end
+
+  defp do_read(rstart, rend, device, acc) when rstart < rend do
+    next_range = limit(rend - rstart, @byte_limit)
+    {:ok, chunk} = :file.pread(device, rstart, next_range)
+    do_read(next_range + 1, rend, device,  [chunk | acc])
+  end
+
+  defp do_read(_rstart, _rend, _device, acc) do
+    Enum.reverse(acc) |> Enum.join
+  end
+
+  defp limit(range_limit, max_sys_limit) when range_limit <= max_sys_limit do
+    range_limit
+  end
+  defp limit(_range_limit, max_sys_limit), do: max_sys_limit
 end
