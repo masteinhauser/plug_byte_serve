@@ -54,10 +54,10 @@ defmodule GetServed do
 end
 ```
 
-## Todo
+## TODO
 
-- [ ] Plug-ify byte serving code
-- [ ] Proper handling of invalid range requests
+- [x] Plug-ify byte serving code
+- [x] Proper handling of invalid range requests
 - [ ] Support multipart range requests
 
 ## Contributing
