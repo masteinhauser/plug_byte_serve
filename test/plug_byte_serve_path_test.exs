@@ -9,19 +9,15 @@ defmodule PlugByteServePathTest do
     plug :match
     plug :dispatch
 
+    @path "test/files/"
+
     # head "/" do
     match "/:file", via: :head do
-      path = "test/files/"
-      conn
-      |> PlugByteServe.call([path: path, file: file])
-      |> send_resp()
+      PlugByteServe.call(conn, [path: @path, file: file, limit: 1000])
     end
 
     get "/:file" do
-      path = "test/files/"
-      conn
-      |> PlugByteServe.call([path: path, file: file])
-      |> send_resp()
+      PlugByteServe.call(conn, [path: @path, file: file, limit: 1000])
     end
   end
 

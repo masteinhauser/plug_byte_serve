@@ -35,25 +35,27 @@ defmodule PlugByteServe do
       #        end
       #      end
   """
-  # @behaviour Plug.Wrapper
 
   alias Plug.Conn
   import Plug.Conn, only: [get_req_header:  2,
-			   resp:            3,
-			   put_resp_header: 3,
-			   send_file:       5]
+			   send_resp:       3,
+			   resp:       3,
+                           put_resp_header: 3,
+                           send_file:       5]
 
   def init(opts \\ []) do
     path = Keyword.get(opts, :path)
     file = Keyword.get(opts, :file)
-    [path: path, file: file]
+    limit = Keyword.get(opts, :limit)
+    [path: path, file: file, limit: limit]
   end
 
   def call(%Conn{method: "HEAD"} = conn, opts) do
-    file = get_file(opts)
-    {:ok, file_info} = File.stat(file)
+    [path: _path, file: file, limit: _limit] =  get_opts(opts)
+    {:ok, file_info} = get_file_info(opts)
 
     content_type = Plug.MIME.path(file)
+
     conn
     |> put_resp_header("accept-ranges", "bytes")
     |> put_resp_header("content-type", content_type)
@@ -62,27 +64,37 @@ defmodule PlugByteServe do
   end
 
   def call(%Conn{method: "GET"} = conn, opts) do
-    file = get_file(opts)
-    {:ok, file_info} = File.stat(file)
-
     conn
-    |> find_range(file)
-    |> send_f(file)
+    |> find_range(opts)
+    |> send_f(opts)
   end
 
   def call(conn, _type, _subtype, _headers, _opts) do
     {:next, conn}
   end
 
-  defp get_file(opts) do
+  defp get_opts(opts) do
     path = Keyword.get(opts, :path, System.cwd)
     file = Keyword.fetch!(opts, :file)
+    limit = Keyword.get(opts, :limit)
+    [path: path, file: file, limit: limit]
+  end
+
+  defp get_file(opts) do
+    [path: path, file: file, limit: _] =  get_opts(opts)
     path <> "/" <> file
   end
 
-  defp find_range(conn, file) do
-    byte_limit = 1_000_000
-    {:ok, file_info} = File.stat(file)
+  defp get_file_info(opts) do
+    opts
+    |> get_opts
+    |> get_file
+    |> File.stat
+  end
+
+  defp find_range(conn, opts) do
+    [path: _, file: _, limit: limit] =  get_opts(opts)
+    {:ok, file_info} = get_file_info(opts)
 
     hdr_range =
       case hdr_range = get_req_header(conn, "range") do
@@ -92,12 +104,10 @@ defmodule PlugByteServe do
 
     [_range_type, range_start, range_end] =
       case hdr_range do
-        ["bytes", "",          ""]        -> ["bytes", "0",         "999"]
-        ["bytes", "0",         ""]        -> ["bytes", "0",         "999"]
         ["bytes", range_start, ""]        -> ["bytes", range_start, "#{file_info.size - 1}"]
         ["bytes", "",          range_end] -> ["bytes", "0",         range_end]
         ["bytes", range_start, range_end] -> ["bytes", range_start, range_end]
-        _                                 -> ["bytes", "0",         "999"]
+	_                                 -> ["bytes", "0",         "#{file_info.size - 1}"]
       end
 
     [range_start, range_end] = Enum.map([range_start, range_end], fn(x) -> String.to_integer(x) end)
@@ -113,42 +123,39 @@ defmodule PlugByteServe do
         range_start <  0 and range_end <  file_info.size -> {206, 0, range_end}
       end
 
-    # Limit the number of bytes read at once
-    [r_start, r_end, r_limit] =
-    cond do
-      r_end - r_start + 1 > byte_limit ->
-        # Make sure they are not too greedy
-        [r_start, r_start + byte_limit, (r_start + byte_limit) - r_start + 1]
-      r_end - r_start + 1 == 0 ->
-        # Handle when they are asking for just 1 byte
-        [r_start, r_end, 1]
-      true ->
-        # Normal request
-        [r_start, r_end, r_end - r_start + 1]
+    limit =
+    case limit do
+      nil -> file_info.size
+      _   -> limit
     end
+
+    r_limit = r_end - r_start + 1
+    r_limit =
+      cond do
+	r_limit > limit -> limit
+	true -> r_limit
+      end
 
     {conn, status, r_start, r_end, r_limit}
   end
 
-  defp send_f({conn, 206, range_start, range_end, range_limit}, file) do
-    {:ok, file_info} = File.stat(file)
+  defp send_f({conn, status, range_start, range_end, range_limit}, opts) do
+    file = get_file(opts)
+    {:ok, file_info} = get_file_info(opts)
+
     content_type = Plug.MIME.path(file)
     conn
     |> put_resp_header("accept-ranges", "bytes")
     |> put_resp_header("content-type", content_type)
     |> put_resp_header("content-length", "#{range_limit}")
     |> put_resp_header("content-range", "bytes #{range_start}-#{range_end}/#{file_info.size}")
-    |> send_file(206, file, range_start, range_limit)
+    |> send_status(status, file, range_start, range_limit)
   end
 
-  defp send_f({conn, 416, range_start, range_end, range_limit}, file) do
-    {:ok, file_info} = File.stat(file)
-    content_type = Plug.MIME.path(file)
-    conn
-    |> put_resp_header("accept-ranges", "bytes")
-    |> put_resp_header("content-type", content_type)
-    |> put_resp_header("content-length", "#{range_limit}")
-    |> put_resp_header("content-range", "bytes #{range_start}-#{range_end}/#{file_info.size}")
-    |> resp(416, "")
+  defp send_status(conn, 206, file, range_start, range_limit) do
+    send_file(conn, 206, file, range_start, range_limit)
+  end
+  defp send_status(conn, 416, _file, _range_start, _range_limit) do
+    resp(conn, 416, "")
   end
 end
