@@ -39,10 +39,9 @@ defmodule PlugByteServe do
 
   alias Plug.Conn
   import Plug.Conn, only: [get_req_header:  2,
-                            put_resp_header: 3,
-			    send_file: 3,
-			    send_file: 5,
-                            resp:       3]
+			   resp:            3,
+			   put_resp_header: 3,
+			   send_file:       5]
 
   def init(opts \\ []) do
     path = Keyword.get(opts, :path)
