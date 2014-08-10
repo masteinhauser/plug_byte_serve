@@ -2,7 +2,7 @@ defmodule PlugByteServePathTest do
   use ExUnit.Case
   use Plug.Test
 
-  defmodule PrivatePathPlug do
+  defmodule PathPlug do
     import Plug.Conn
     use Plug.Router
 
@@ -26,7 +26,7 @@ defmodule PlugByteServePathTest do
   end
 
   defp call(conn) do
-    PrivatePathPlug.call(conn, [])
+    PathPlug.call(conn, [])
   end
 
   test "head response with only headers and webm" do
