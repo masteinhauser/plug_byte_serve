@@ -35,11 +35,13 @@ defmodule PlugByteServe do
       #        end
       #      end
   """
-  #  @behaviour Plug.Module
+  # @behaviour Plug.Wrapper
 
   alias Plug.Conn
   import Plug.Conn, only: [get_req_header:  2,
                             put_resp_header: 3,
+			    send_file: 3,
+			    send_file: 5,
                             resp:       3]
 
   def init(opts \\ []) do
@@ -64,21 +66,9 @@ defmodule PlugByteServe do
     file = get_file(opts)
     {:ok, file_info} = File.stat(file)
 
-    {status, range_start, range_end, range_limit} = find_range(conn, file)
-
-    {:ok, data} =
-      case status do
-        206 -> read_file(file, range_start, range_end, range_limit)
-        416 -> {:ok, ""}
-      end
-
-    content_type = Plug.MIME.path(file)
     conn
-    |> put_resp_header("accept-ranges", "bytes")
-    |> put_resp_header("content-type", content_type)
-    |> put_resp_header("content-length", "#{range_limit}")
-    |> put_resp_header("content-range", "bytes #{range_start}-#{range_end}/#{file_info.size}")
-    |> resp(status, data)
+    |> find_range(file)
+    |> send_f(file)
   end
 
   def call(conn, _type, _subtype, _headers, _opts) do
@@ -138,13 +128,28 @@ defmodule PlugByteServe do
         [r_start, r_end, r_end - r_start + 1]
     end
 
-    {status, r_start, r_end, r_limit}
+    {conn, status, r_start, r_end, r_limit}
   end
 
-  defp read_file(file, range_start, _range_end, range_limit) do
-    {:ok, device} = :file.open(file, [:read, :binary])
-    {:ok, _position} = :file.position(device, range_start)
-    {:ok, data} = :file.read(device, range_limit)
-    {:ok, data}
+  defp send_f({conn, 206, range_start, range_end, range_limit}, file) do
+    {:ok, file_info} = File.stat(file)
+    content_type = Plug.MIME.path(file)
+    conn
+    |> put_resp_header("accept-ranges", "bytes")
+    |> put_resp_header("content-type", content_type)
+    |> put_resp_header("content-length", "#{range_limit}")
+    |> put_resp_header("content-range", "bytes #{range_start}-#{range_end}/#{file_info.size}")
+    |> send_file(206, file, range_start, range_limit)
+  end
+
+  defp send_f({conn, 416, range_start, range_end, range_limit}, file) do
+    {:ok, file_info} = File.stat(file)
+    content_type = Plug.MIME.path(file)
+    conn
+    |> put_resp_header("accept-ranges", "bytes")
+    |> put_resp_header("content-type", content_type)
+    |> put_resp_header("content-length", "#{range_limit}")
+    |> put_resp_header("content-range", "bytes #{range_start}-#{range_end}/#{file_info.size}")
+    |> resp(416, "")
   end
 end
