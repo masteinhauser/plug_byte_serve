@@ -2,31 +2,27 @@ defmodule PlugByteServePathTest do
   use ExUnit.Case
   use Plug.Test
 
-  defmodule PrivatePathPlug do
+  defmodule PathPlug do
     import Plug.Conn
     use Plug.Router
 
     plug :match
     plug :dispatch
 
+    @path "test/files/"
+
     # head "/" do
     match "/:file", via: :head do
-      path = "test/files/"
-      conn
-      |> PlugByteServe.call([path: path, file: file])
-      |> send_resp()
+      PlugByteServe.call(conn, [path: @path, file: file, limit: 1000])
     end
 
     get "/:file" do
-      path = "test/files/"
-      conn
-      |> PlugByteServe.call([path: path, file: file])
-      |> send_resp()
+      PlugByteServe.call(conn, [path: @path, file: file, limit: 1000])
     end
   end
 
   defp call(conn) do
-    PrivatePathPlug.call(conn, [])
+    PathPlug.call(conn, [])
   end
 
   test "head response with only headers and webm" do
