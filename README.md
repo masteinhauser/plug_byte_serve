@@ -58,6 +58,7 @@ end
 
 - [x] Plug-ify byte serving code
 - [x] Proper handling of invalid range requests
+- [x] Use `sendfile` for efficiency
 - [ ] Support multipart range requests
 
 ## Contributing
