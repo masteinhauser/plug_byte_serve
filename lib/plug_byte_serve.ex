@@ -38,9 +38,9 @@ defmodule PlugByteServe do
 
   alias Plug.Conn
   import Plug.Conn, only: [get_req_header:  2,
-			   send_resp:       3,
-			   resp:       3,
                            put_resp_header: 3,
+                           resp:            3,
+                           send_resp:       3,
                            send_file:       5]
 
   def init(opts \\ []) do
@@ -107,7 +107,7 @@ defmodule PlugByteServe do
         ["bytes", range_start, ""]        -> ["bytes", range_start, "#{file_info.size - 1}"]
         ["bytes", "",          range_end] -> ["bytes", "0",         range_end]
         ["bytes", range_start, range_end] -> ["bytes", range_start, range_end]
-	_                                 -> ["bytes", "0",         "#{file_info.size - 1}"]
+        _                                 -> ["bytes", "0",         "#{file_info.size - 1}"]
       end
 
     [range_start, range_end] = Enum.map([range_start, range_end], fn(x) -> String.to_integer(x) end)
@@ -132,8 +132,8 @@ defmodule PlugByteServe do
     r_limit = r_end - r_start + 1
     r_limit =
       cond do
-	r_limit > limit -> limit
-	true -> r_limit
+        r_limit > limit -> limit
+        true -> r_limit
       end
 
     {conn, status, r_start, r_end, r_limit}
