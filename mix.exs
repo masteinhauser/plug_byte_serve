@@ -26,7 +26,10 @@ defmodule PlugByteServe.Mixfile do
   end
 
   defp package do
-    %{licenses: ["Apache 2"],
-      links: %{"Github" => "https://github.com/masteinhauser/plug_byte_serve"}}
+    [
+      contributors: ["Myles Steinhauser"],
+      licenses: ["Apache 2"],
+      links: %{"Github" => "https://github.com/masteinhauser/plug_byte_serve"}
+    ]
   end
 end
