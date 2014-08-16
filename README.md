@@ -1,4 +1,4 @@
-# PlugByteServe
+# PlugByteServe [![hex.pm version](https://img.shields.io/hexpm/v/plug_byte_serve.svg)](https://hex.pm/packages/plug_byte_serve) [![hex.pm downloads](https://img.shields.io/hexpm/dt/plug_byte_serve.svg)](https://hex.pm/packages/plug_byte_serve)
 
 This is a Plug module for adding [HTTP Content-Range][rfc-content-range] to a set of routes. Only single byte ranges are currently supported.
 Wikipedia entry on [HTTP Byte Serving][wiki-byte-serving] for more information.
