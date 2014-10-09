@@ -3,7 +3,7 @@ defmodule PlugByteServe.Mixfile do
 
   def project do
     [app: :plug_byte_serve,
-     version: "0.2.0",
+     version: "0.3.0",
      elixir: "~> 1.0.0",
      deps: deps,
      package: package,
