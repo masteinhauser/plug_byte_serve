@@ -20,8 +20,7 @@ defmodule PlugByteServe.Mixfile do
 
   defp deps do
     [{:cowboy, "~> 1.0.0", only: [:test, :dev]},
-      # {:plug, "~> 0.5.0"},
-     {:plug,   github: "elixir-lang/plug"},
+     {:plug, "~> 0.8.1"},
      {:ex_doc, github: "elixir-lang/ex_doc", only: [:docs]}]
   end
 
