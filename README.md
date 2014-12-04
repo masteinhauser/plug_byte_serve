@@ -9,7 +9,7 @@ Add `plug_byte_serve` to the `deps` function in your project's `mix.exs` file:
 
 ```elixir
 defp deps do
-  [{:plug_byte_serve, "~> 0.2.0"}]
+  [{:plug_byte_serve, "~> 0.3.0"}]
 end
 ```
 
