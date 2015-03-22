@@ -3,8 +3,8 @@ defmodule PlugByteServe.Mixfile do
 
   def project do
     [app: :plug_byte_serve,
-     version: "0.3.1",
-     elixir: "~> 1.0.2",
+     version: "0.3.2",
+     elixir: "~> 1.0.3",
      deps: deps,
      package: package,
      name: "Plug Byte Serve",
@@ -19,9 +19,11 @@ defmodule PlugByteServe.Mixfile do
   end
 
   defp deps do
-    [{:cowboy, "~> 1.0.0", only: [:test, :dev]},
-     {:plug, "~> 0.9.0"},
-     {:ex_doc, "~> 0.6.2",  only: [:docs]}]
+    [
+      {:plug, "~> 0.11.1"},
+      {:ex_doc, "~> 0.6.2",  only: [:docs]},
+      {:cowboy, "~> 1.0.0", only: [:test, :dev]}
+    ]
   end
 
   defp package do
